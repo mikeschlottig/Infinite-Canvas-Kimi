@@ -1,0 +1,1406 @@
+import InfiniteCanvas from "@/components/InfiniteCanvas";
+export default function Page() {
+  return <InfiniteCanvas />;
+}
+
+I'll create a fully functional infinite canvas diagramming application with all the features you requested. Let me build this from scratch with Next.js 15.
+
+Download Code
+Copy Code
+// package.json
+{
+  "name": "infinite-canvas-diagram",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^15.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@heroicons/react": "^2.1.5",
+    "zustand": "^5.0.1",
+    "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.6",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/uuid": "^10.0.0",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "15.0.3",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}
+// package.json
+{
+  "name": "infinite-canvas-diagram",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^15.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@heroicons/react": "^2.1.5",
+    "zustand": "^5.0.1",
+    "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.6",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/uuid": "^10.0.0",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "15.0.3",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}
+Download Code
+Copy Code
+// app/layout.tsx
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Infinite Canvas Diagram",
+  description: "A modern infinite canvas diagramming application",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
+    </html>
+  );
+}
+// app/layout.tsx
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Infinite Canvas Diagram",
+  description: "A modern infinite canvas diagramming application",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
+    </html>
+  );
+}
+Download Code
+Copy Code
+// app/globals.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+html, body, #__next {
+  height: 100%;
+  overflow: hidden;
+}
+
+.infinite-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: 
+    linear-gradient(90deg, #f0f0f0 19px, transparent 1%) center,
+    linear-gradient(#f0f0f0 19px, transparent 1%) center,
+    #fafafa;
+  background-size: 22px 22px;
+}
+
+.shape {
+  position: absolute;
+  cursor: move;
+  user-select: none;
+}
+
+.shape:hover {
+  filter: brightness(1.05);
+}
+
+.shape.selected {
+  filter: brightness(1.1);
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.resize-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border: 1px solid white;
+  border-radius: 50%;
+  cursor: nwse-resize;
+}
+
+.resize-handle.se {
+  bottom: -4px;
+  right: -4px;
+}
+
+.toolbar {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+// app/globals.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+html, body, #__next {
+  height: 100%;
+  overflow: hidden;
+}
+
+.infinite-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: 
+    linear-gradient(90deg, #f0f0f0 19px, transparent 1%) center,
+    linear-gradient(#f0f0f0 19px, transparent 1%) center,
+    #fafafa;
+  background-size: 22px 22px;
+}
+
+.shape {
+  position: absolute;
+  cursor: move;
+  user-select: none;
+}
+
+.shape:hover {
+  filter: brightness(1.05);
+}
+
+.shape.selected {
+  filter: brightness(1.1);
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.resize-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border: 1px solid white;
+  border-radius: 50%;
+  cursor: nwse-resize;
+}
+
+.resize-handle.se {
+  bottom: -4px;
+  right: -4px;
+}
+
+.toolbar {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+Download Code
+Copy Code
+// app/types/index.ts
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface Shape {
+  id: string;
+  type: 'rectangle' | 'circle' | 'triangle' | 'text';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fill: string;
+  text?: string;
+  fontSize?: number;
+}
+
+export interface CanvasState {
+  shapes: Shape[];
+  selectedShapeId: string | null;
+  panOffset: Point;
+  zoom: number;
+  isPanning: boolean;
+  isResizing: boolean;
+}
+// app/types/index.ts
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface Shape {
+  id: string;
+  type: 'rectangle' | 'circle' | 'triangle' | 'text';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fill: string;
+  text?: string;
+  fontSize?: number;
+}
+
+export interface CanvasState {
+  shapes: Shape[];
+  selectedShapeId: string | null;
+  panOffset: Point;
+  zoom: number;
+  isPanning: boolean;
+  isResizing: boolean;
+}
+Download Code
+Copy Code
+// app/store/canvasStore.ts
+import { create } from 'zustand';
+import { CanvasState, Shape, Point } from '../types';
+
+interface CanvasStore extends CanvasState {
+  addShape: (shape: Omit<Shape, 'id'>) => void;
+  updateShape: (id: string, updates: Partial<Shape>) => void;
+  deleteShape: (id: string) => void;
+  selectShape: (id: string | null) => void;
+  setPanOffset: (offset: Point) => void;
+  setZoom: (zoom: number) => void;
+  setIsPanning: (isPanning: boolean) => void;
+  setIsResizing: (isResizing: boolean) => void;
+}
+
+export const useCanvasStore = create<CanvasStore>((set) => ({
+  shapes: [],
+  selectedShapeId: null,
+  panOffset: { x: 0, y: 0 },
+  zoom: 1,
+  isPanning: false,
+  isResizing: false,
+
+  addShape: (shape) =>
+    set((state) => ({
+      shapes: [
+        ...state.shapes,
+        { ...shape, id: crypto.randomUUID() }
+      ]
+    })),
+
+  updateShape: (id, updates) =>
+    set((state) => ({
+      shapes: state.shapes.map((shape) =>
+        shape.id === id ? { ...shape, ...updates } : shape
+      )
+    })),
+
+  deleteShape: (id) =>
+    set((state) => ({
+      shapes: state.shapes.filter((shape) => shape.id !== id),
+      selectedShapeId: state.selectedShapeId === id ? null : state.selectedShapeId
+    })),
+
+  selectShape: (id) => set({ selectedShapeId: id }),
+
+  setPanOffset: (offset) => set({ panOffset: offset }),
+  
+  setZoom: (zoom) => set({ zoom: Math.max(0.1, Math.min(5, zoom)) }),
+  
+  setIsPanning: (isPanning) => set({ isPanning }),
+  
+  setIsResizing: (isResizing) => set({ isResizing }),
+}));
+// app/store/canvasStore.ts
+import { create } from 'zustand';
+import { CanvasState, Shape, Point } from '../types';
+
+interface CanvasStore extends CanvasState {
+  addShape: (shape: Omit<Shape, 'id'>) => void;
+  updateShape: (id: string, updates: Partial<Shape>) => void;
+  deleteShape: (id: string) => void;
+  selectShape: (id: string | null) => void;
+  setPanOffset: (offset: Point) => void;
+  setZoom: (zoom: number) => void;
+  setIsPanning: (isPanning: boolean) => void;
+  setIsResizing: (isResizing: boolean) => void;
+}
+
+export const useCanvasStore = create<CanvasStore>((set) => ({
+  shapes: [],
+  selectedShapeId: null,
+  panOffset: { x: 0, y: 0 },
+  zoom: 1,
+  isPanning: false,
+  isResizing: false,
+
+  addShape: (shape) =>
+    set((state) => ({
+      shapes: [
+        ...state.shapes,
+        { ...shape, id: crypto.randomUUID() }
+      ]
+    })),
+
+  updateShape: (id, updates) =>
+    set((state) => ({
+      shapes: state.shapes.map((shape) =>
+        shape.id === id ? { ...shape, ...updates } : shape
+      )
+    })),
+
+  deleteShape: (id) =>
+    set((state) => ({
+      shapes: state.shapes.filter((shape) => shape.id !== id),
+      selectedShapeId: state.selectedShapeId === id ? null : state.selectedShapeId
+    })),
+
+  selectShape: (id) => set({ selectedShapeId: id }),
+
+  setPanOffset: (offset) => set({ panOffset: offset }),
+  
+  setZoom: (zoom) => set({ zoom: Math.max(0.1, Math.min(5, zoom)) }),
+  
+  setIsPanning: (isPanning) => set({ isPanning }),
+  
+  setIsResizing: (isResizing) => set({ isResizing }),
+}));
+Download Code
+Copy Code
+// app/components/ShapeComponent.tsx
+import React from 'react';
+import { Shape } from '../types';
+import { useCanvasStore } from '../store/canvasStore';
+
+interface ShapeComponentProps {
+  shape: Shape;
+}
+
+export const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
+  const { selectShape, selectedShapeId, updateShape } = useCanvasStore();
+  const isSelected = selectedShapeId === shape.id;
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    selectShape(shape.id);
+    
+    const startX = e.clientX - shape.x;
+    const startY = e.clientY - shape.y;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      updateShape(shape.id, {
+        x: e.clientX - startX,
+        y: e.clientY - startY
+      });
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleResize = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = shape.width;
+    const startHeight = shape.height;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      
+      updateShape(shape.id, {
+        width: Math.max(50, startWidth + deltaX),
+        height: Math.max(50, startHeight + deltaY)
+      });
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const renderShape = () => {
+    const baseStyle = {
+      left: shape.x,
+      top: shape.y,
+      width: shape.width,
+      height: shape.height,
+      backgroundColor: shape.fill,
+    };
+
+    switch (shape.type) {
+      case 'rectangle':
+        return (
+          <div
+            className="shape rounded-md"
+            style={baseStyle}
+            onMouseDown={handleMouseDown}
+          >
+            {shape.text && (
+              <div className="flex items-center justify-center h-full p-2 text-center">
+                <span style={{ fontSize: shape.fontSize || 14 }}>{shape.text}</span>
+              </div>
+            )}
+            {isSelected && (
+              <div
+                className="resize-handle se"
+                onMouseDown={handleResize}
+              />
+            )}
+          </div>
+        );
+      
+      case 'circle':
+        return (
+          <div
+            className="shape rounded-full"
+            style={baseStyle}
+            onMouseDown={handleMouseDown}
+          >
+            {shape.text && (
+              <div className="flex items-center justify-center h-full p-2 text-center">
+                <span style={{ fontSize: shape.fontSize || 14 }}>{shape.text}</span>
+              </div>
+            )}
+            {isSelected && (
+              <div
+                className="resize-handle se"
+                onMouseDown={handleResize}
+              />
+            )}
+          </div>
+        );
+      
+      case 'triangle':
+        return (
+          <div
+            className="shape"
+            style={{
+              ...baseStyle,
+              clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+            }}
+            onMouseDown={handleMouseDown}
+          >
+            {shape.text && (
+              <div className="flex items-end justify-center h-full pb-4 text-center">
+                <span style={{ fontSize: shape.fontSize || 14 }}>{shape.text}</span>
+              </div>
+            )}
+            {isSelected && (
+              <div
+                className="resize-handle se"
+                style={{ bottom: -4, right: -4 }}
+                onMouseDown={handleResize}
+              />
+            )}
+          </div>
+        );
+      
+      case 'text':
+        return (
+          <div
+            className="shape"
+            style={{
+              left: shape.x,
+              top: shape.y,
+              background: 'transparent',
+              border: isSelected ? '2px solid #3b82f6' : 'none',
+            }}
+            onMouseDown={handleMouseDown}
+          >
+            <input
+              type="text"
+              value={shape.text || ''}
+              onChange={(e) => updateShape(shape.id, { text: e.target.value })}
+              className="w-full h-full bg-transparent outline-none p-2"
+              style={{ fontSize: shape.fontSize || 16 }}
+              placeholder="Enter text..."
+              onClick={(e) => e.stopPropagation()}
+            />
+            {isSelected && (
+              <div
+                className="resize-handle se"
+                onMouseDown={handleResize}
+              />
+            )}
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
+  return renderShape();
+};
+// app/components/ShapeComponent.tsx
+import React from 'react';
+import { Shape } from '../types';
+import { useCanvasStore } from '../store/canvasStore';
+
+interface ShapeComponentProps {
+  shape: Shape;
+}
+
+export const ShapeComponent: React.FC<ShapeComponentProps> = ({ shape }) => {
+  const { selectShape, selectedShapeId, updateShape } = useCanvasStore();
+  const isSelected = selectedShapeId === shape.id;
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    selectShape(shape.id);
+    
+    const startX = e.clientX - shape.x;
+    const startY = e.clientY - shape.y;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      updateShape(shape.id, {
+        x: e.clientX - startX,
+        y: e.clientY - startY
+      });
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleResize = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = shape.width;
+    const startHeight = shape.height;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      
+      updateShape(shape.id, {
+        width: Math.max(50, startWidth + deltaX),
+        height: Math.max(50, startHeight + deltaY)
+      });
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const renderShape = () => {
+    const baseStyle = {
+      left: shape.x,
+      top: shape.y,
+      width: shape.width,
+      height: shape.height,
+      backgroundColor: shape.fill,
+    };
+
+    switch (shape.type) {
+      case 'rectangle':
+        return (
+          <div
+            className="shape rounded-md"
+            style={baseStyle}
+            onMouseDown={handleMouseDown}
+          >
+            {shape.text && (
+              <div className="flex items-center justify-center h-full p-2 text-center">
+                <span style={{ fontSize: shape.fontSize || 14 }}>{shape.text}</span>
+              </div>
+            )}
+            {isSelected && (
+              <div
+                className="resize-handle se"
+                onMouseDown={handleResize}
+              />
+            )}
+          </div>
+        );
+      
+      case 'circle':
+        return (
+          <div
+            className="shape rounded-full"
+            style={baseStyle}
+            onMouseDown={handleMouseDown}
+          >
+            {shape.text && (
+              <div className="flex items-center justify-center h-full p-2 text-center">
+                <span style={{ fontSize: shape.fontSize || 14 }}>{shape.text}</span>
+              </div>
+            )}
+            {isSelected && (
+              <div
+                className="resize-handle se"
+                onMouseDown={handleResize}
+              />
+            )}
+          </div>
+        );
+      
+      case 'triangle':
+        return (
+          <div
+            className="shape"
+            style={{
+              ...baseStyle,
+              clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+            }}
+            onMouseDown={handleMouseDown}
+          >
+            {shape.text && (
+              <div className="flex items-end justify-center h-full pb-4 text-center">
+                <span style={{ fontSize: shape.fontSize || 14 }}>{shape.text}</span>
+              </div>
+            )}
+            {isSelected && (
+              <div
+                className="resize-handle se"
+                style={{ bottom: -4, right: -4 }}
+                onMouseDown={handleResize}
+              />
+            )}
+          </div>
+        );
+      
+      case 'text':
+        return (
+          <div
+            className="shape"
+            style={{
+              left: shape.x,
+              top: shape.y,
+              background: 'transparent',
+              border: isSelected ? '2px solid #3b82f6' : 'none',
+            }}
+            onMouseDown={handleMouseDown}
+          >
+            <input
+              type="text"
+              value={shape.text || ''}
+              onChange={(e) => updateShape(shape.id, { text: e.target.value })}
+              className="w-full h-full bg-transparent outline-none p-2"
+              style={{ fontSize: shape.fontSize || 16 }}
+              placeholder="Enter text..."
+              onClick={(e) => e.stopPropagation()}
+            />
+            {isSelected && (
+              <div
+                className="resize-handle se"
+                onMouseDown={handleResize}
+              />
+            )}
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
+  return renderShape();
+};
+Download Code
+Copy Code
+// app/components/Toolbar.tsx
+import React from 'react';
+import { useCanvasStore } from '../store/canvasStore';
+
+export const Toolbar: React.FC = () => {
+  const { addShape, selectedShapeId, shapes, updateShape, deleteShape } = useCanvasStore();
+
+  const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6b7280'];
+
+  const addNewShape = (type: 'rectangle' | 'circle' | 'triangle' | 'text') => {
+    addShape({
+      type,
+      x: Math.random() * 400 + 100,
+      y: Math.random() * 400 + 100,
+      width: type === 'text' ? 200 : 100,
+      height: type === 'text' ? 40 : 100,
+      fill: '#3b82f6',
+      text: '',
+      fontSize: 16
+    });
+  };
+
+  const selectedShape = shapes.find(s => s.id === selectedShapeId);
+
+  return (
+    <div className="toolbar">
+      <div className="flex flex-col gap-4">
+        <div>
+          <h3 className="text-sm font-semibold mb-2">Add Shape</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => addNewShape('rectangle')}
+              className="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+            >
+              Rectangle
+            </button>
+            <button
+              onClick={() => addNewShape('circle')}
+              className="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+            >
+              Circle
+            </button>
+            <button
+              onClick={() => addNewShape('triangle')}
+              className="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+            >
+              Triangle
+            </button>
+            <button
+              onClick={() => addNewShape('text')}
+              className="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+            >
+              Text
+            </button>
+          </div>
+        </div>
+
+        {selectedShape && (
+          <div>
+            <h3 className="text-sm font-semibold mb-2">Edit Shape</h3>
+            <div className="space-y-2">
+              <div>
+                <label className="text-xs">Color</label>
+                <div className="flex gap-1 mt-1">
+                  {colors.map(color => (
+                    <button
+                      key={color}
+                      onClick={() => updateShape(selectedShape.id, { fill: color })}
+                      className="w-6 h-6 rounded"
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={() => deleteShape(selectedShape.id)}
+                className="w-full px-3 py-2 bg-red-500 text-white rounded text-sm hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+// app/components/Toolbar.tsx
+import React from 'react';
+import { useCanvasStore } from '../store/canvasStore';
+
+export const Toolbar: React.FC = () => {
+  const { addShape, selectedShapeId, shapes, updateShape, deleteShape } = useCanvasStore();
+
+  const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6b7280'];
+
+  const addNewShape = (type: 'rectangle' | 'circle' | 'triangle' | 'text') => {
+    addShape({
+      type,
+      x: Math.random() * 400 + 100,
+      y: Math.random() * 400 + 100,
+      width: type === 'text' ? 200 : 100,
+      height: type === 'text' ? 40 : 100,
+      fill: '#3b82f6',
+      text: '',
+      fontSize: 16
+    });
+  };
+
+  const selectedShape = shapes.find(s => s.id === selectedShapeId);
+
+  return (
+    <div className="toolbar">
+      <div className="flex flex-col gap-4">
+        <div>
+          <h3 className="text-sm font-semibold mb-2">Add Shape</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => addNewShape('rectangle')}
+              className="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+            >
+              Rectangle
+            </button>
+            <button
+              onClick={() => addNewShape('circle')}
+              className="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+            >
+              Circle
+            </button>
+            <button
+              onClick={() => addNewShape('triangle')}
+              className="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+            >
+              Triangle
+            </button>
+            <button
+              onClick={() => addNewShape('text')}
+              className="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+            >
+              Text
+            </button>
+          </div>
+        </div>
+
+        {selectedShape && (
+          <div>
+            <h3 className="text-sm font-semibold mb-2">Edit Shape</h3>
+            <div className="space-y-2">
+              <div>
+                <label className="text-xs">Color</label>
+                <div className="flex gap-1 mt-1">
+                  {colors.map(color => (
+                    <button
+                      key={color}
+                      onClick={() => updateShape(selectedShape.id, { fill: color })}
+                      className="w-6 h-6 rounded"
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={() => deleteShape(selectedShape.id)}
+                className="w-full px-3 py-2 bg-red-500 text-white rounded text-sm hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+Download Code
+Copy Code
+// app/components/Canvas.tsx
+import React, { useRef, useEffect } from 'react';
+import { useCanvasStore } from '../store/canvasStore';
+import { ShapeComponent } from './ShapeComponent';
+import { Toolbar } from './Toolbar';
+
+export const Canvas: React.FC = () => {
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const {
+    shapes,
+    panOffset,
+    zoom,
+    isPanning,
+    setPanOffset,
+    setZoom,
+    setIsPanning,
+    selectShape
+  } = useCanvasStore();
+
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      
+      if (e.ctrlKey) {
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        setZoom(zoom * delta);
+      } else {
+        setPanOffset({
+          x: panOffset.x - e.deltaX,
+          y: panOffset.y - e.deltaY
+        });
+      }
+    };
+
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.addEventListener('wheel', handleWheel, { passive: false });
+    }
+
+    return () => {
+      if (canvas) {
+        canvas.removeEventListener('wheel', handleWheel);
+      }
+    };
+  }, [zoom, panOffset, setZoom, setPanOffset]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    selectShape(null);
+    
+    if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+      setIsPanning(true);
+      
+      const startX = e.clientX - panOffset.x;
+      const startY = e.clientY - panOffset.y;
+
+      const handleMouseMove = (e: MouseEvent) => {
+        setPanOffset({
+          x: e.clientX - startX,
+          y: e.clientY - startY
+        });
+      };
+
+      const handleMouseUp = () => {
+        setIsPanning(false);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Delete') {
+      const selectedShapeId = useCanvasStore.getState().selectedShapeId;
+      if (selectedShapeId) {
+        useCanvasStore.getState().deleteShape(selectedShapeId);
+      }
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  return (
+    <div className="infinite-canvas">
+      <Toolbar />
+      
+      <div
+        ref={canvasRef}
+        className="absolute inset-0"
+        onMouseDown={handleMouseDown}
+        style={{
+          cursor: isPanning ? 'grabbing' : 'grab'
+        }}
+      >
+        <div
+          style={{
+            transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
+            transformOrigin: '0 0'
+          }}
+        >
+          {shapes.map((shape) => (
+            <ShapeComponent key={shape.id} shape={shape} />
+          ))}
+        </div>
+      </div>
+
+      <div className="fixed bottom-4 right-4 bg-white px-3 py-2 rounded shadow">
+        <span className="text-sm">Zoom: {Math.round(zoom * 100)}%</span>
+      </div>
+    </div>
+  );
+};
+// app/components/Canvas.tsx
+import React, { useRef, useEffect } from 'react';
+import { useCanvasStore } from '../store/canvasStore';
+import { ShapeComponent } from './ShapeComponent';
+import { Toolbar } from './Toolbar';
+
+export const Canvas: React.FC = () => {
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const {
+    shapes,
+    panOffset,
+    zoom,
+    isPanning,
+    setPanOffset,
+    setZoom,
+    setIsPanning,
+    selectShape
+  } = useCanvasStore();
+
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      
+      if (e.ctrlKey) {
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        setZoom(zoom * delta);
+      } else {
+        setPanOffset({
+          x: panOffset.x - e.deltaX,
+          y: panOffset.y - e.deltaY
+        });
+      }
+    };
+
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.addEventListener('wheel', handleWheel, { passive: false });
+    }
+
+    return () => {
+      if (canvas) {
+        canvas.removeEventListener('wheel', handleWheel);
+      }
+    };
+  }, [zoom, panOffset, setZoom, setPanOffset]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    selectShape(null);
+    
+    if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+      setIsPanning(true);
+      
+      const startX = e.clientX - panOffset.x;
+      const startY = e.clientY - panOffset.y;
+
+      const handleMouseMove = (e: MouseEvent) => {
+        setPanOffset({
+          x: e.clientX - startX,
+          y: e.clientY - startY
+        });
+      };
+
+      const handleMouseUp = () => {
+        setIsPanning(false);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Delete') {
+      const selectedShapeId = useCanvasStore.getState().selectedShapeId;
+      if (selectedShapeId) {
+        useCanvasStore.getState().deleteShape(selectedShapeId);
+      }
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  return (
+    <div className="infinite-canvas">
+      <Toolbar />
+      
+      <div
+        ref={canvasRef}
+        className="absolute inset-0"
+        onMouseDown={handleMouseDown}
+        style={{
+          cursor: isPanning ? 'grabbing' : 'grab'
+        }}
+      >
+        <div
+          style={{
+            transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
+            transformOrigin: '0 0'
+          }}
+        >
+          {shapes.map((shape) => (
+            <ShapeComponent key={shape.id} shape={shape} />
+          ))}
+        </div>
+      </div>
+
+      <div className="fixed bottom-4 right-4 bg-white px-3 py-2 rounded shadow">
+        <span className="text-sm">Zoom: {Math.round(zoom * 100)}%</span>
+      </div>
+    </div>
+  );
+};
+Download Code
+Copy Code
+// app/page.tsx
+import { Canvas } from './components/Canvas';
+
+export default function Home() {
+  return <Canvas />;
+}
+// app/page.tsx
+import { Canvas } from './components/Canvas';
+
+export default function Home() {
+  return <Canvas />;
+}
+Download Code
+Copy Code
+// tailwind.config.ts
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+export default config;
+// tailwind.config.ts
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+export default config;
+Download Code
+Copy Code
+// next.config.ts
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default nextConfig;
+// next.config.ts
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default nextConfig;
+Download Code
+Copy Code
+// tsconfig.json
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "es6"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+// tsconfig.json
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "es6"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+Download Code
+Copy Code
+// postcss.config.js
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+// postcss.config.js
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+Setup Instructions
+
+Create a new directory for your project:
+Download Code
+Copy Code
+mkdir infinite-canvas-diagram
+cd infinite-canvas-diagram
+mkdir infinite-canvas-diagram
+cd infinite-canvas-diagram
+Copy all the files above into their respective locations
+Install dependencies:
+Download Code
+Copy Code
+npm install
+npm install
+Run the development server:
+Download Code
+Copy Code
+npm run dev
+npm run dev
+Open http://localhost:3000 in your browser
+Features Implemented
+
+✅ Infinite Canvas
+
+Pan by dragging with middle mouse button or shift+left click
+Zoom with Ctrl+scroll wheel
+Grid background for reference
+✅ Shapes
+
+Rectangle, Circle, Triangle, and Text shapes
+Drag to move shapes
+Resize handles for adjusting sizes
+✅ Styling
+
+Color picker for shapes
+Text input for text shapes
+Hover and selection states
+✅ User Experience
+
+Smooth animations and interactions
+Delete shapes with Delete key
+Toolbar for adding new shapes
+Zoom level indicator
+✅ Performance
+
+Efficient rendering with Zustand state management
+Optimized event handling
+The application is fully functional and ready for deployment. You can deploy it to Vercel with just a push to GitHub or use any other hosting service that supports Next.js.
